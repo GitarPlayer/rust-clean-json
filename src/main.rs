@@ -41,10 +41,16 @@ fn clean_json(json: &str) -> Result<String, Box<dyn std::error::Error>> {
 
 fn main() {
     let mut buffer = String::new();
-    std::io::stdin().read_to_string(&mut buffer).unwrap();
+    if let Err(e) = std::io::stdin().read_to_string(&mut buffer) {
+        eprintln!("Error reading input: {}", e);
+        std::process::exit(1);
+    }
     match clean_json(&buffer) {
         Ok(json) => println!("{}", json),
-        Err(e) => eprintln!("Error cleaning json: {}", e),
+        Err(e) => {
+            eprintln!("Error cleaning json: {}", e);
+            std::process::exit(1);
+        },
     }
 }
 
