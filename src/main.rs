@@ -10,7 +10,7 @@ fn clean_value(val: &Value) -> Option<Value> {
         },
         Value::Array(arr) => {
             if arr.is_empty() { 
-                Some(Value::Null) 
+                Some(Value::Null)
             } else {
                 let cleaned: Vec<Value> = arr.iter()
                     .filter_map(clean_value)
@@ -32,7 +32,34 @@ fn clean_value(val: &Value) -> Option<Value> {
     }
 }
 
-// Rest of the main function code...
+fn clean_json(json: &str) -> Result<String, Box<dyn std::error::Error>> {
+    let value: Value = serde_json::from_str(json)?;
+
+    if value.is_object() && value.as_object().unwrap().is_empty() {
+        return Err("JSON is an empty object".into());
+    }
+
+    let cleaned = clean_value(&value);
+    match cleaned {
+        Some(v) => Ok(serde_json::to_string(&v)?),
+        None => Err("Cleaned JSON is empty".into()),
+    }
+}
+
+fn main() {
+    let mut buffer = String::new();
+    if let Err(e) = std::io::stdin().read_to_string(&mut buffer) {
+        eprintln!("Error reading input: {}", e);
+        std::process::exit(1);
+    }
+    match clean_json(&buffer) {
+        Ok(json) => println!("{}", json),
+        Err(e) => {
+            eprintln!("Error cleaning json: {}", e);
+            std::process::exit(1);
+        },
+    }
+}
 
 #[cfg(test)]
 mod tests {
