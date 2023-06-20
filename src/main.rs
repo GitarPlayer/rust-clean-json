@@ -98,3 +98,7 @@ mod tests {
     #[test]
     fn it_errors_on_empty_json() {
         let input = r#"{}"#;  // Empty JSON
+        let result = clean_json(input);
+        assert!(result.is_err());
+    }
+}
