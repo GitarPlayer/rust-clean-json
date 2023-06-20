@@ -81,8 +81,13 @@ mod tests {
         "#;
         let expected = r#"{"key":"true","empty array":[null],"empty object":{},"nested":{"key":"false","empty array":[null],"empty object":{}}}"#;
         let cleaned = clean_json(input).unwrap();
-        assert_eq!(cleaned, expected);
+    
+        let cleaned_value: Value = serde_json::from_str(&cleaned).unwrap();
+        let expected_value: Value = serde_json::from_str(expected).unwrap();
+    
+        assert_eq!(cleaned_value, expected_value);
     }
+
 
     #[test]
     fn it_errors_on_invalid_json() {
