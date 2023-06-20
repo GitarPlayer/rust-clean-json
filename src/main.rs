@@ -6,7 +6,7 @@ fn clean_value(val: &Value) -> Option<Value> {
         Value::Null => None,
         Value::String(s) => {
             let trimmed = s.trim().to_owned();
-            if trimmed.is_empty() { None } else { Some(Value::String(trimmed)) }
+            Some(Value::String(trimmed))
         },
         Value::Array(arr) => {
             if arr.is_empty() { 
@@ -27,6 +27,7 @@ fn clean_value(val: &Value) -> Option<Value> {
         _ => Some(val.clone()),
     }
 }
+
 
 fn clean_json(json: &str) -> Result<String, Box<dyn std::error::Error>> {
     let value: Value = serde_json::from_str(json)?;
@@ -68,18 +69,18 @@ mod tests {
             "  key  ": "  true  ",
             "  empty array  ": [],
             "  empty object  ": {},
-            "  empty string  ": "",
+            "  empty string  ": "   ",
             "  null  ": null,
             "  nested  ": {
                 "  key  ": "  false  ",
                 "  empty array  ": [],
                 "  empty object  ": {},
-                "  empty string  ": "",
+                "  empty string  ": "   ",
                 "  null  ": null
             }
         }
         "#;
-        let expected = r#"{"key":"true","empty array":[null],"empty object":{},"nested":{"key":"false","empty array":[null],"empty object":{}}}"#;
+        let expected = r#"{"key":"true","empty array":[null],"empty object":{},"empty string":"","nested":{"key":"false","empty array":[null],"empty object":{},"empty string":""}}"#;
         let cleaned = clean_json(input).unwrap();
     
         let cleaned_value: Value = serde_json::from_str(&cleaned).unwrap();
@@ -87,6 +88,7 @@ mod tests {
     
         assert_eq!(cleaned_value, expected_value);
     }
+
 
 
     #[test]
