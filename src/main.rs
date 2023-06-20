@@ -9,16 +9,20 @@ fn clean_value(val: &Value) -> Option<Value> {
             if trimmed.is_empty() { None } else { Some(Value::String(trimmed)) }
         },
         Value::Array(arr) => {
-            let cleaned: Vec<Value> = arr.iter()
-                .filter_map(clean_value)
-                .collect();
-            if cleaned.is_empty() { None } else { Some(Value::Array(cleaned)) }
+            if arr.is_empty() { 
+                Some(Value::Array(vec![Value::Null])) 
+            } else {
+                let cleaned: Vec<Value> = arr.iter()
+                    .filter_map(clean_value)
+                    .collect();
+                Some(Value::Array(cleaned))
+            }
         },
         Value::Object(map) => {
             let cleaned: Map<String, Value> = map.iter()
                 .filter_map(|(k, v)| clean_value(v).map(|v| (k.trim().to_owned(), v)))
                 .collect();
-            if cleaned.is_empty() { None } else { Some(Value::Object(cleaned)) }
+            Some(Value::Object(cleaned))
         },
         _ => Some(val.clone()),
     }
@@ -26,8 +30,7 @@ fn clean_value(val: &Value) -> Option<Value> {
 
 fn clean_json(json: &str) -> Result<String, Box<dyn std::error::Error>> {
     let value: Value = serde_json::from_str(json)?;
-    
-    // Check if the parsed JSON is an empty object
+
     if value.is_object() && value.as_object().unwrap().is_empty() {
         return Err("JSON is an empty object".into());
     }
@@ -76,7 +79,7 @@ mod tests {
             }
         }
         "#;
-        let expected = r#"{"key":"true","nested":{"key":"false"}}"#;
+        let expected = r#"{"key":"true","empty array":[null],"empty object":{},"nested":{"key":"false","empty array":[null],"empty object":{}}}"#;
         let cleaned = clean_json(input).unwrap();
         assert_eq!(cleaned, expected);
     }
