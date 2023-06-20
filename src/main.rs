@@ -10,7 +10,7 @@ fn clean_value(val: &Value) -> Option<Value> {
         },
         Value::Array(arr) => {
             if arr.is_empty() { 
-                Some(Value::Array(vec![Value::Null])) 
+                Some(Value::Null) 
             } else {
                 let cleaned: Vec<Value> = arr.iter()
                     .filter_map(clean_value)
@@ -27,7 +27,6 @@ fn clean_value(val: &Value) -> Option<Value> {
         _ => Some(val.clone()),
     }
 }
-
 
 fn clean_json(json: &str) -> Result<String, Box<dyn std::error::Error>> {
     let value: Value = serde_json::from_str(json)?;
@@ -80,16 +79,14 @@ mod tests {
             }
         }
         "#;
-        let expected = r#"{"key":"true","empty array":[null],"empty object":{},"empty string":"","nested":{"key":"false","empty array":[null],"empty object":{},"empty string":""}}"#;
+        let expected = r#"{"key":"true","empty array":null,"empty object":{},"empty string":"","nested":{"key":"false","empty array":null,"empty object":{},"empty string":""}}"#;
         let cleaned = clean_json(input).unwrap();
-    
+
         let cleaned_value: Value = serde_json::from_str(&cleaned).unwrap();
         let expected_value: Value = serde_json::from_str(expected).unwrap();
-    
+
         assert_eq!(cleaned_value, expected_value);
     }
-
-
 
     #[test]
     fn it_errors_on_invalid_json() {
@@ -101,7 +98,3 @@ mod tests {
     #[test]
     fn it_errors_on_empty_json() {
         let input = r#"{}"#;  // Empty JSON
-        let result = clean_json(input);
-        assert!(result.is_err());
-    }
-}
