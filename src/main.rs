@@ -9,22 +9,22 @@ fn clean_value(val: &Value) -> Option<Value> {
             Some(Value::String(trimmed))
         },
         Value::Array(arr) => {
-            if arr.is_empty() { 
+            let cleaned: Vec<Value> = arr.iter()
+                .filter_map(clean_value)
+                .collect();
+            if cleaned.is_empty() || (cleaned.len() == 1 && cleaned[0].is_null()) {
                 Some(Value::Null)
             } else {
-                let cleaned: Vec<Value> = arr.iter()
-                    .filter_map(clean_value)
-                    .collect();
                 Some(Value::Array(cleaned))
             }
         },
         Value::Object(map) => {
-            if map.is_empty() {
+            let cleaned: Map<String, Value> = map.iter()
+                .filter_map(|(k, v)| clean_value(v).map(|v| (k.trim().to_owned(), v)))
+                .collect();
+            if cleaned.is_empty() {
                 Some(Value::Null)
             } else {
-                let cleaned: Map<String, Value> = map.iter()
-                    .filter_map(|(k, v)| clean_value(v).map(|v| (k.trim().to_owned(), v)))
-                    .collect();
                 Some(Value::Object(cleaned))
             }
         },
@@ -72,18 +72,20 @@ mod tests {
             "  key  ": "  true  ",
             "  empty array  ": [],
             "  empty object  ": {},
+            "  array with null  ": [null],
             "  empty string  ": "   ",
             "  null  ": null,
             "  nested  ": {
                 "  key  ": "  false  ",
                 "  empty array  ": [],
+                "  array with null  ": [null],
                 "  empty object  ": {},
                 "  empty string  ": "   ",
                 "  null  ": null
             }
         }
         "#;
-        let expected = r#"{"key":"true","empty array":null,"empty object":null,"empty string":"","nested":{"key":"false","empty array":null,"empty object":null,"empty string":""}}"#;
+        let expected = r#"{"key":"true","empty array":null,"empty object":null,"array with null":null,"empty string":"","nested":{"key":"false","empty array":null,"array with null":null,"empty object":null,"empty string":""}}"#;
         let cleaned = clean_json(input).unwrap();
 
         let cleaned_value: Value = serde_json::from_str(&cleaned).unwrap();
