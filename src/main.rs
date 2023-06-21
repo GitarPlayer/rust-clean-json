@@ -1,19 +1,20 @@
 use std::io::Read;
 use serde_json::{Value, Map};
 
+// Function to clean a JSON Value
 fn clean_value(val: &Value) -> Option<Value> {
     match val {
-        Value::Null => None,
+        Value::Null => None,  // Remove null values
         Value::String(s) => {
             let trimmed = s.trim().to_owned();
-            Some(Value::String(trimmed))
+            Some(Value::String(trimmed))  // Trim string values
         },
         Value::Array(arr) => {
             let cleaned: Vec<Value> = arr.iter()
                 .filter_map(clean_value)
                 .collect();
-            if cleaned.is_empty() || (cleaned.len() == 1 && cleaned[0].is_null()) {
-                Some(Value::Null)
+            if cleaned.is_empty() || cleaned.iter().all(|v| v.is_null()) {
+                Some(Value::Null)  // Convert empty arrays or arrays with only null values to null
             } else {
                 Some(Value::Array(cleaned))
             }
@@ -23,7 +24,7 @@ fn clean_value(val: &Value) -> Option<Value> {
                 .filter_map(|(k, v)| clean_value(v).map(|v| (k.trim().to_owned(), v)))
                 .collect();
             if cleaned.is_empty() {
-                Some(Value::Null)
+                Some(Value::Null)  // Convert empty objects to null
             } else {
                 Some(Value::Object(cleaned))
             }
@@ -32,6 +33,7 @@ fn clean_value(val: &Value) -> Option<Value> {
     }
 }
 
+// Function to clean a JSON string
 fn clean_json(json: &str) -> Result<String, Box<dyn std::error::Error>> {
     let value: Value = serde_json::from_str(json)?;
 
@@ -82,10 +84,11 @@ mod tests {
                 "  empty object  ": {},
                 "  empty string  ": "   ",
                 "  null  ": null
-            }
+            },
+            "  nested array  ": [[], [null], [null, null]]
         }
         "#;
-        let expected = r#"{"key":"true","empty array":null,"empty object":null,"array with null":null,"empty string":"","nested":{"key":"false","empty array":null,"array with null":null,"empty object":null,"empty string":""}}"#;
+        let expected = r#"{"key":"true","empty array":null,"empty object":null,"array with null":null,"empty string":"","nested":{"key":"false","empty array":null,"array with null":null,"empty object":null,"empty string":""},"nested array":null}"#;
         let cleaned = clean_json(input).unwrap();
 
         let cleaned_value: Value = serde_json::from_str(&cleaned).unwrap();
