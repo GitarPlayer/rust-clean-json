@@ -24,7 +24,7 @@ fn clean_value(val: &Value) -> Option<Value> {
                 .filter_map(|(k, v)| clean_value(v).map(|v| (k.trim().to_owned(), v)))
                 .collect();
             if cleaned.is_empty() {
-                Some(Value::Null)  // Convert empty objects to null
+                Some(Value::Object(vec![("value".to_owned(), Value::Null)].into_iter().collect()))  // Convert empty objects to {"value": null}
             } else {
                 Some(Value::Object(cleaned))
             }
@@ -88,7 +88,7 @@ mod tests {
             "  nested array  ": [[], [null], [null, null]]
         }
         "#;
-        let expected = r#"{"key":"true","empty array":null,"empty object":null,"array with null":null,"empty string":"","nested":{"key":"false","empty array":null,"array with null":null,"empty object":null,"empty string":""},"nested array":null}"#;
+        let expected = r#"{"key":"true","empty array":null,"empty object":{"value":null},"array with null":null,"empty string":"","nested":{"key":"false","empty array":null,"array with null":null,"empty object":{"value":null},"empty string":""},"nested array":null}"#;
         let cleaned = clean_json(input).unwrap();
 
         let cleaned_value: Value = serde_json::from_str(&cleaned).unwrap();
